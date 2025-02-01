@@ -1,6 +1,7 @@
 (ns difm.audioaddict
   (:require [clj-http.lite.client :as client]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [clojure.java.io :as io]))
 
 (def ^:private endpoint-auth "https://api.audioaddict.com/v1/di/members/authenticate")
 
@@ -50,6 +51,16 @@
                 (str "https://api.audioaddict.com/v1/di/shows/" mixshow-name "/episodes")
                 {"per_page" 10 "page" page}))
 
+(defn download-track
+  [track-url file-name]
+  (let [response (client/get track-url {:as :byte-array})]
+    (with-open [w (io/output-stream file-name)]
+      (.write w (:body response)))))
+
+(defn download-cover
+  [cover-url]
+  (:body (client/get cover-url {:as :byte-array})))
+
 (comment
   (def user "<redacted>")
   (def password "<redacted>")
@@ -65,9 +76,5 @@
   (get-channel-events user password 13)
   (get-mixshow-episodes user password "in-the-mix" 1)
   (get-track user password 292297)
-
-  (let [x (range (+ 1 10))
-        y (+ 1 10)]
-    (doseq [x (println x)]))
 
   :rcf)
