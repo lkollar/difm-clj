@@ -1,5 +1,7 @@
 (ns difm.main
-  (:require [clojure.string :as str]
+  (:require [clojure.string :as string]
+            [clojure.string :as str]
+            [clojure.tools.cli :refer [parse-opts]]
             [difm.audioaddict :as audioaddict]
             [difm.id3tagger :as id3tagger]
             [difm.io :as io])
@@ -78,14 +80,41 @@
       (audioaddict/download-track track-url file-name)
       (update-id3-tags track-info file-name))))
 
+(defn usage [options-summary]
+  (->> ["DI.FM mix show downloader"
+        ""
+        "Usage: difm.main [options]"
+        ""
+        "Options:"
+        options-summary
+        ""]
+       (string/join \newline)))
 
-(defn -main
-  [& args]
-  (let [config (load-config-or-die)
-        username (:user config)
+(def cli-options
+  [["-m" "--mix-show NAME" "Name of the mix show"
+    :parse-fn str]])
+
+(defn error-msg [errors]
+  (str "The following errors occurred while parsing your command:\n\n"
+       (string/join \newline errors)))
+
+(defn validate-args
+  [args]
+  (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
+    (cond
+      (:help options)
+      {:exit-message (usage summary) :ok? true}
+      errors
+      {:exit-message (error-msg errors)}
+      :else
+      {:exit-message (usage summary)})))
+
+(defn download-tracks
+  [mix-show-name config]
+  (let [username (:user config)
         password (:password config)
         seen-tracks (io/load-seen-tracks seen-tracks-filename)
-        new-tracks (fetch-all-tracks "in-the-mix" (:user config) (:password config) seen-tracks)
+        new-tracks (fetch-all-tracks mix-show-name username password seen-tracks)
         new-track-ids (map #(-> %
                                 :tracks
                                 first
@@ -97,6 +126,19 @@
       (println (str "Processing track " (:slug track)))
       (save-track username password track)
       (io/save-seen-tracks seen-tracks-filename (concat seen-tracks new-track-ids)))))
+
+(defn exit [status msg]
+  (println msg)
+  (System/exit status))
+
+(defn -main
+  [& args]
+  (let [{:keys [options exit-message ok?]} (validate-args args)
+        mix-show-name (:mix-show options)
+        config (load-config-or-die)]
+    (if exit-message
+      (exit (if ok? 0 1) exit-message)
+      (download-tracks mix-show-name config))))
 
 ; Parse configuration
 (comment
