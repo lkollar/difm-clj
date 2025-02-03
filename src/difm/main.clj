@@ -21,7 +21,6 @@
                                      (println "Could not read 'config.edn'")
                                      (System/exit 1)))))
 
-
 (defn fetch-all-tracks
   [mix-show-name username password seen-tracks]
   (letfn [(get-track-id [track-response] (:id (first (:tracks track-response))))
@@ -32,7 +31,6 @@
         (if (or (empty? episodes) (contains-seen-track episodes))
           all-episodes
           (recur (inc counter) (concat all-episodes episodes)))))))
-
 
 (defn get-track-info
   [episode]

@@ -2,11 +2,11 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]))
 
-  (defn parse-config-file
-    [config-path]
-    (let [config-file (slurp config-path)
-          parsed-edn (edn/read-string config-file)]
-      parsed-edn))
+(defn parse-config-file
+  [config-path]
+  (let [config-file (slurp config-path)
+        parsed-edn (edn/read-string config-file)]
+    parsed-edn))
 
 (defn load-seen-tracks
   [file-path]
