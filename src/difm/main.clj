@@ -97,3 +97,37 @@
       (println (str "Processing track " (:slug track)))
       (save-track username password track)
       (io/save-seen-tracks seen-tracks-filename (concat seen-tracks new-track-ids)))))
+
+; Parse configuration
+(comment
+  (-main)
+  (io/parse-config-file "config.edn")
+
+  ; error handling
+  (try
+    (io/parse-config-file "config1.edn")
+    (catch Exception e (println "Failed to parse configuration")))
+
+  (io/load-seen-tracks "saved_track_ids.txt")
+  :rcf)
+
+; Load canned show metadata
+(comment
+  (def config (io/parse-config-file "config.edn"))
+  ;(spit "in-the-mix-shows.edn" (pr-str in-the-mix-shows))
+  (def in-the-mix-shows (clojure.edn/read-string (slurp "in-the-mix-shows.edn")))
+  (def single-track (first in-the-mix-shows))
+  (def track-info (get-track-info single-track))
+  (:show-name track-info)
+  (def track-id (:id track-info))
+  (def track (audioaddict/get-track (:user config) (:password config) track-id))
+  (save-track (:user config) (:password config) single-track)
+  (get-track-url (:user config) (:password config) track-id)
+
+  :rcf)
+
+; MP4 tagging
+(comment
+  (id3tagger/set-mp4-tags "In The Mix Episode 422 (31 October 2024).mp4" :album "In the Mix")
+
+  :rcf)
