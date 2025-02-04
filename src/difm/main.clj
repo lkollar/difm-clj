@@ -79,16 +79,12 @@
 (defn usage [options-summary]
   (->> ["DI.FM mix show downloader"
         ""
-        "Usage: difm.main [options]"
+        "Usage: difm.main <mix-show-slug>"
         ""
         "Options:"
         options-summary
         ""]
        (string/join \newline)))
-
-(def cli-options
-  [["-m" "--mix-show NAME" "Name of the mix show"
-    :parse-fn str]])
 
 (defn error-msg [errors]
   (str "The following errors occurred while parsing your command:\n\n"
@@ -96,10 +92,12 @@
 
 (defn validate-args
   [args]
-  (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
+  (let [{:keys [options arguments errors summary]} (parse-opts args nil)]
     (cond
       (:help options)
       {:exit-message (usage summary) :ok? true}
+      (= 1 (count arguments))
+      {:mix-show-name (first arguments)}
       errors
       {:exit-message (error-msg errors)}
       :else
@@ -130,8 +128,7 @@
 
 (defn -main
   [& args]
-  (let [{:keys [options exit-message ok?]} (validate-args args)
-        mix-show-name (:mix-show options)
+  (let [{:keys [mix-show-name exit-message ok?]} (validate-args args)
         config (load-config-or-die)]
     (if exit-message
       (exit (if ok? 0 1) exit-message)
