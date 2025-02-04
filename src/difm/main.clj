@@ -9,8 +9,6 @@
            (java.util.logging Level Logger))
   (:gen-class))
 
-(def ^:private seen-tracks-filename "saved_track_ids.txt")
-
 ; TODO Work out CWD and always try to read config files from there
 ; TODO validate config schema
 (defn load-config-or-die
@@ -111,6 +109,7 @@
   [mix-show-name config]
   (let [username (:user config)
         password (:password config)
+        seen-tracks-filename (format "%s.txt" mix-show-name)
         seen-tracks (io/load-seen-tracks seen-tracks-filename)
         new-tracks (fetch-all-tracks mix-show-name username password seen-tracks)
         new-track-ids (map #(-> %
